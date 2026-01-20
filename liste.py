@@ -75,6 +75,11 @@ class to_do_liste:
 
             if self.__num_menu == 2:
                 self.__ajout_des_taches()
+                continue
+
+            if self.__num_menu == 3:
+                self.__terminer_tache()
+                continue
         
     def __ecran_de_selection(self) -> None:
         """
@@ -127,7 +132,16 @@ class to_do_liste:
             iso_date = date.split('/')
             iso_date = f"{iso_date[2]}-{iso_date[1]}-{iso_date[0]}"
             
-            date_tache = datetime.date.fromisoformat(iso_date)
+            try:
+                date_tache = datetime.date.fromisoformat(iso_date)
+            except ValueError:
+                print(f"\nLa tache \"{tache}\" a une date invalide: {date}.")
+                print("Suppression de la tache.")
+                self.__taches.pop(tache)
+                self.__num_menu = 0
+                with open(self.__nom_fichier, 'w') as fichier:
+                    fichier.write(json.dumps(self.__taches, indent=1, ensure_ascii=False))
+                return
 
             if info["status"]:
                 print(f"{colorama.Fore.GREEN}{tache} : {date} TERMINEE{colorama.Style.RESET_ALL}")
@@ -152,23 +166,48 @@ class to_do_liste:
         Retourne: None
         """
 
+        while True:
+
+            tache = input("Veuillez entrer la tache: ")
+            if tache in self.__taches:
+                print("\nErreur, cette tâche existe déjà.")
+                continue
+
+            date = input("\nVeuillez rentrer la date sous la forme JJ/MM/AAAA: ")
+            if not re.fullmatch(r"([0-2][0-9]|3[01])\/(0[1-9]|1[0-2])\/[0-9]{4}", date.strip()):
+                print("\nErreur, la date entrée est invalide.")
+                continue
+            else:
+                self.__taches[tache]={"date": date, "status": 0}
+                self.__taches = dict(sorted(self.__taches.items(), key=lambda item: (item[1]["status"], item[1]["date"])))
+                self.__num_menu = 0
+                break
+
         with open(self.__nom_fichier, 'w') as fichier:
+            fichier.write(json.dumps(self.__taches, indent=1, ensure_ascii=False))
 
-            while True:
+    def __terminer_tache(self):
+        """
+        Fonction permettant de déclarer une tâche comme étant terminée.
 
-                tache = input("Veuillez entrer la tache: ")
-                if tache in self.__taches:
-                    print("\nErreur, cette tâche existe déjà.")
-                    continue
+        Paramètres:
+            None
 
-                date = input("\nVeuillez rentrer la date sous la forme JJ/MM/AAAA: ")
-                if not re.fullmatch(r"([0-2][0-9]|3[01])\/(0[1-9]|1[0-2])\/[0-9]{4}", date.strip()):
-                    print("\nErreur, la date entrée est invalide.")
-                    continue
-                else:
-                    self.__taches[tache]={"date": date, "status": 0}
-                    self.__taches = dict(sorted(self.__taches.items(), key=lambda item: (item[1]["status"], item[1]["date"])))
-                    self.__num_menu = 0
-                    break
-                    
+        Retourne: None
+        """
+
+        while True:
+
+            tache = input("Veuillez rentrer la tâche a terminer: ")
+
+            if not tache in self.__taches:
+                print("\nErreur: La tâche donnée n'existe pas.\n")
+                continue
+
+            self.__taches[tache]["status"] = 1
+            self.__taches = dict(sorted(self.__taches.items(), key=lambda item: (item[1]["status"], item[1]["date"])))
+            self.__num_menu = 0
+            break
+
+        with open(self.__nom_fichier, 'w') as fichier:
             fichier.write(json.dumps(self.__taches, indent=1, ensure_ascii=False))
