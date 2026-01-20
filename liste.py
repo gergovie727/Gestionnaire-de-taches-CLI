@@ -1,5 +1,7 @@
 import json
 import erreur
+import colorama
+import datetime
 
 class to_do_liste:
     """
@@ -20,14 +22,14 @@ class to_do_liste:
 
     def __init__(self, nom_fichier:str) -> None:
 
+        self.__taches: dict = {}
+
         if self.__verifier_fichier(nom_fichier):
-            self.nom_fichier = nom_fichier
+            self.nom_fichier: str = nom_fichier
         else:
             raise erreur.FichierError("Le fichier fourni n'est pas un fichier json")
         
-        self.__num_menu = 0
-
-        self.__taches = {}
+        self.__num_menu: int = 0
         
         
     def __verifier_fichier(self, nom_fichier: str) -> bool:
@@ -42,7 +44,7 @@ class to_do_liste:
         """
         try:
             with open(nom_fichier, 'r') as fichier:
-                json.loads(fichier.read())
+                self.__taches: dict = json.loads(fichier.read())
                 return True
         except FileNotFoundError:
             return True
@@ -56,7 +58,7 @@ class to_do_liste:
         Paramètres:
             None
 
-        Retourne None
+        Retourne: None
         """
 
         while True:
@@ -66,13 +68,17 @@ class to_do_liste:
                 continue
 
             if self.__num_menu == 1:
-                pass
+                self.__visualisation_des_taches()
+                continue
         
     def __ecran_de_selection(self) -> None:
         """
-        Fonction permettant d'écrire le message de bienvenue
+        Fonction permettant d'écrire le message de bienvenue et la sélection du choix de l'utilisateur.
         
-        :param self: Description
+        Paramètres:
+            None
+
+        Retourne: None
         """
 
         while True:
@@ -82,6 +88,7 @@ class to_do_liste:
             print("3. Terminer une tâche")
             print("4. Supprimer une tâche")
             str_num_menu: str = input("5. Quitter\n\n")
+            print("\n")
 
             try:
                 self.__num_menu = int(str_num_menu)
@@ -92,3 +99,52 @@ class to_do_liste:
                 print("\n\nErreur, veuillez fournir une valeur entre 1 et 5.\n\n")
                 pass
 
+    def __visualisation_des_taches(self) -> None:
+        """
+        Fonction permettant à l'utilisateur de visualiser les tâches qu'il a en cours et celles qu'il a terminé.
+
+        Paramètres:
+            None
+
+        Retourne: None
+        """
+
+        if self.__taches == {}:
+            print("\nAucune tâche enregistrée pour le moment.\n")
+            input()
+            self.__num_menu = 0
+            return
+        
+        today = datetime.date.today()
+        
+        for tache,date in self.__taches.items():
+            iso_date = date.split('/')
+            iso_date = f"{iso_date[2]}-{iso_date[1]}-{iso_date[0]}"
+            
+            date_tache = datetime.date.fromisoformat(iso_date)
+
+            if date_tache > today:
+                print(f"{colorama.Fore.GREEN}{tache} : {date}{colorama.Style.RESET_ALL}")
+            elif date_tache == today:
+                print(f"{colorama.Fore.YELLOW}{tache} : {date}{colorama.Style.RESET_ALL}")
+            else:
+                print(f"{colorama.Fore.RED}{tache} : {date}{colorama.Style.RESET_ALL}")
+
+        input("\n")
+        self.__num_menu = 0
+
+    def __ajout_des_taches(self):
+        """
+        Fonction permettant à l'utilisateur d'ajouter des tâches à sa liste.
+
+        Paramètres:
+            None
+
+        Retourne: None
+        """
+
+    while True:
+
+        tache = input("Veuillez entrer la tache: ")
+        
+        date = input("\nVeuillez rentrer la date sous la forme JJ/MM/AAAA: ")
