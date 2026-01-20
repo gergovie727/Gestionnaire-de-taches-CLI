@@ -2,6 +2,7 @@ import json
 import erreur
 import colorama
 import datetime
+import re
 
 class to_do_liste:
     """
@@ -25,7 +26,8 @@ class to_do_liste:
         self.__taches: dict = {}
 
         if self.__verifier_fichier(nom_fichier):
-            self.nom_fichier: str = nom_fichier
+            self.__nom_fichier: str = nom_fichier
+            self.__taches = dict(sorted(self.__taches.items(), key=lambda item: (item[1]["status"], item[1]["date"])))
         else:
             raise erreur.FichierError("Le fichier fourni n'est pas un fichier json")
         
@@ -70,6 +72,9 @@ class to_do_liste:
             if self.__num_menu == 1:
                 self.__visualisation_des_taches()
                 continue
+
+            if self.__num_menu == 2:
+                self.__ajout_des_taches()
         
     def __ecran_de_selection(self) -> None:
         """
@@ -117,14 +122,18 @@ class to_do_liste:
         
         today = datetime.date.today()
         
-        for tache,date in self.__taches.items():
+        for tache,info in self.__taches.items():
+            date = info["date"]
             iso_date = date.split('/')
             iso_date = f"{iso_date[2]}-{iso_date[1]}-{iso_date[0]}"
             
             date_tache = datetime.date.fromisoformat(iso_date)
 
-            if date_tache > today:
-                print(f"{colorama.Fore.GREEN}{tache} : {date}{colorama.Style.RESET_ALL}")
+            if info["status"]:
+                print(f"{colorama.Fore.GREEN}{tache} : {date} TERMINEE{colorama.Style.RESET_ALL}")
+
+            elif date_tache > today:
+                print(f"{colorama.Fore.LIGHTGREEN_EX}{tache} : {date}{colorama.Style.RESET_ALL}")
             elif date_tache == today:
                 print(f"{colorama.Fore.YELLOW}{tache} : {date}{colorama.Style.RESET_ALL}")
             else:
@@ -143,8 +152,23 @@ class to_do_liste:
         Retourne: None
         """
 
-    while True:
+        with open(self.__nom_fichier, 'w') as fichier:
 
-        tache = input("Veuillez entrer la tache: ")
-        
-        date = input("\nVeuillez rentrer la date sous la forme JJ/MM/AAAA: ")
+            while True:
+
+                tache = input("Veuillez entrer la tache: ")
+                if tache in self.__taches:
+                    print("\nErreur, cette tâche existe déjà.")
+                    continue
+
+                date = input("\nVeuillez rentrer la date sous la forme JJ/MM/AAAA: ")
+                if not re.fullmatch(r"([0-2][0-9]|3[01])\/(0[1-9]|1[0-2])\/[0-9]{4}", date.strip()):
+                    print("\nErreur, la date entrée est invalide.")
+                    continue
+                else:
+                    self.__taches[tache]={"date": date, "status": 0}
+                    self.__taches = dict(sorted(self.__taches.items(), key=lambda item: (item[1]["status"], item[1]["date"])))
+                    self.__num_menu = 0
+                    break
+                    
+            fichier.write(json.dumps(self.__taches, indent=1, ensure_ascii=False))
