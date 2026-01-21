@@ -1,5 +1,4 @@
 import json
-import erreur
 import colorama
 import datetime
 
@@ -35,33 +34,37 @@ class ToDoList:
 
         self.__taches: dict = {}
 
-        if self.__verifier_fichier(nom_fichier):
+        presence_fichier = self.__verifier_fichier(nom_fichier)
+
+        if presence_fichier == {}:
+            self.__nom_fichier: str = nom_fichier
+
+        else:
             self.__nom_fichier: str = nom_fichier
             self.__taches = dict(sorted(self.__taches.items(), key=lambda item: (item[1]["status"], self.__get_iso_date(item[1]["date"]))))
-        else:
-            raise erreur.FichierError("Le fichier fourni n'est pas un fichier json")
+            
         
         self.__num_menu: int = 0
         
         
-    def __verifier_fichier(self, nom_fichier: str) -> bool:
+    def __verifier_fichier(self, nom_fichier: str) -> dict:
         """
         Fonction permettant de vérifier si le fichier fourni est un fichier json valide.
         
         Paramètres:
             - nom_fichier (str): Le nom du fichier
 
-        Retourne (bool): True si le fichier fourni est un fichier json valide, False sinon.
+        Retourne (int): 1 si le fichier fourni est un fichier json valide, 2 si le fichier n'existe pas, 0 sinon.
         
         """
         try:
             with open(nom_fichier, 'r') as fichier:
-                self.__taches: dict = json.loads(fichier.read())
-                return True
+                return json.loads(fichier.read())
         except FileNotFoundError:
-            return True
+            return {}
         except Exception as e:  
-            return False
+            print("Erreur, le fichier donné n'est pas un fichier JSON valide.")
+            exit(0)
         
     def menu(self) -> None:
         """
@@ -214,7 +217,7 @@ class ToDoList:
                 self.__num_menu = 0
                 return
 
-            id = str(int(max([i for i in self.__taches.keys()])) + 1)
+            id = str(int(max([i for i in self.__taches.keys()] or  [0])) + 1)
 
             date = input("\nVeuillez rentrer la date sous la forme JJ/MM/AAAA: ")
 
