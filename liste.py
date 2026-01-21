@@ -2,9 +2,8 @@ import json
 import erreur
 import colorama
 import datetime
-import re
 
-class to_do_liste:
+class ToDoList:
     """
     La classe gérant le gestionnaire de tâches.
 
@@ -12,13 +11,18 @@ class to_do_liste:
         None
         
     Variable d'Instance:
-        None
+        __taches (dict): Contient les tâches en cours
+        __nom_fichier (str): Contient le nom du fichier json où stocker les tâches.
+        __num_menu (int): Contient là où en est l'utilisateur dans ses actions.
 
     Methodes de Classe:
         None
-
+        
     Methodes d'Instance:
-        None
+        __init__(self, nom_fichier:str) -> None: L'initialisation de la classe.
+        __verifier_fichier(self, nom_fichier: str) -> bool: Vérifie si le fichier fourni est bien un fichier json bien formé. Renvoie True s'il l'est ou si le fichier n'existe pas. Renvoie False sinon.
+        menu(self) -> None: Permet la sélection de la fonction à utiliser en fonction de __num_menu.
+        __ecran_de_selection(self) -> None: Affiche l'écran de sélection des menus.
     """
 
     def __init__(self, nom_fichier:str) -> None:
@@ -36,7 +40,7 @@ class to_do_liste:
         
     def __verifier_fichier(self, nom_fichier: str) -> bool:
         """
-        Fonction privée permettant de vérifier si le fichier fourni est un fichier json valide. Si le fichier n'existe pas, il est créé.
+        Fonction permettant de vérifier si le fichier fourni est un fichier json valide.
         
         Paramètres:
             - nom_fichier (str): Le nom du fichier
@@ -119,6 +123,36 @@ class to_do_liste:
                 print("\n\nErreur, veuillez fournir une valeur entre 1 et 5.\n\n")
                 pass
 
+    def __sauvegarde(self) -> None:
+        """
+        Fonction permettant la sauvegarde des données dans le fichier json.
+
+        Paramètres:
+            None
+
+        Retourne: None
+        """
+
+        with open(self.__nom_fichier, 'w') as fichier:
+            self.__taches = dict(sorted(self.__taches.items(), key=lambda item: (item[1]["status"], self.__get_iso_date(item[1]["date"]))))
+            fichier.write(json.dumps(self.__taches, indent=1, ensure_ascii=False))
+
+    def __get_iso_date(self, date: str) -> datetime.date:
+        """
+        Fonction permettant de retourner la date au standard iso à partir de la date en français.
+        
+        Paramètres:
+            date (str): La date en français.
+
+        Retourne: x(datetime.date) la date en format iso.
+        """
+
+        iso_date = date.split('/')
+        iso_date = f"{iso_date[2]}-{iso_date[1]}-{iso_date[0]}"
+        return datetime.date.fromisoformat(iso_date)
+
+
+ 
     def __visualisation_des_taches(self) -> None:
         """
         Fonction permettant à l'utilisateur de visualiser les tâches qu'il a en cours et celles qu'il a terminé.
@@ -138,20 +172,9 @@ class to_do_liste:
         today = datetime.date.today()
         
         for tache,info in self.__taches.items():
+
             date = info["date"]
-            iso_date = date.split('/')
-            iso_date = f"{iso_date[2]}-{iso_date[1]}-{iso_date[0]}"
-            
-            try:
-                date_tache = datetime.date.fromisoformat(iso_date)
-            except ValueError:
-                print(f"\nLa tache \"{tache}\" a une date invalide: {date}.")
-                print("Suppression de la tache.")
-                self.__taches.pop(tache)
-                self.__num_menu = 0
-                with open(self.__nom_fichier, 'w') as fichier:
-                    fichier.write(json.dumps(self.__taches, indent=1, ensure_ascii=False))
-                return
+            date_tache = self.__get_iso_date(date)
 
             if info["status"]:
                 print(f"{colorama.Fore.GREEN}{tache} : {date} TERMINEE{colorama.Style.RESET_ALL}")
@@ -189,17 +212,18 @@ class to_do_liste:
                 continue
 
             date = input("\nVeuillez rentrer la date sous la forme JJ/MM/AAAA: ")
-            if not re.fullmatch(r"([0-2][0-9]|3[01])\/(0[1-9]|1[0-2])\/[0-9]{4}", date.strip()):
+
+            try:
+                self.__get_iso_date(date)
+            except:
                 print("\nErreur, la date entrée est invalide.")
                 continue
-            else:
-                self.__taches[tache]={"date": date, "status": 0}
-                self.__taches = dict(sorted(self.__taches.items(), key=lambda item: (item[1]["status"], item[1]["date"])))
-                self.__num_menu = 0
-                break
 
-        with open(self.__nom_fichier, 'w') as fichier:
-            fichier.write(json.dumps(self.__taches, indent=1, ensure_ascii=False))
+            self.__taches[tache]={"date": date, "status": 0}
+            self.__num_menu = 0
+            break
+
+        self.__sauvegarde()
 
     def __terminer_tache(self):
         """
@@ -224,12 +248,10 @@ class to_do_liste:
                 continue
 
             self.__taches[tache]["status"] = 1
-            self.__taches = dict(sorted(self.__taches.items(), key=lambda item: (item[1]["status"], item[1]["date"])))
             self.__num_menu = 0
             break
 
-        with open(self.__nom_fichier, 'w') as fichier:
-            fichier.write(json.dumps(self.__taches, indent=1, ensure_ascii=False))
+        self.__sauvegarde()
 
     def __supprimer_une_tache(self) -> None:
         """
@@ -254,9 +276,7 @@ class to_do_liste:
                 continue
 
             self.__taches.pop(tache)
-            self.__taches = dict(sorted(self.__taches.items(), key=lambda item: (item[1]["status"], item[1]["date"])))
             self.__num_menu = 0
             break
 
-        with open(self.__nom_fichier, 'w') as fichier:
-            fichier.write(json.dumps(self.__taches, indent=1, ensure_ascii=False))
+        self.__sauvegarde()

@@ -1,5 +1,5 @@
 import argparse
-from liste import to_do_liste
+from liste import ToDoList
 
 parser = argparse.ArgumentParser(
     prog="Gestionnaire de tâches",
@@ -13,6 +13,6 @@ args = parser.parse_args()
 
 if __name__ == "__main__":
 
-    liste = to_do_liste(args.fichier)
+    liste = ToDoList(args.fichier)
 
     liste.menu()
