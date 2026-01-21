@@ -80,6 +80,10 @@ class to_do_liste:
             if self.__num_menu == 3:
                 self.__terminer_tache()
                 continue
+
+            if self.__num_menu == 4:
+                self.__supprimer_une_tache()
+                continue
         
     def __ecran_de_selection(self) -> None:
         """
@@ -205,6 +209,32 @@ class to_do_liste:
                 continue
 
             self.__taches[tache]["status"] = 1
+            self.__taches = dict(sorted(self.__taches.items(), key=lambda item: (item[1]["status"], item[1]["date"])))
+            self.__num_menu = 0
+            break
+
+        with open(self.__nom_fichier, 'w') as fichier:
+            fichier.write(json.dumps(self.__taches, indent=1, ensure_ascii=False))
+
+    def __supprimer_une_tache(self):
+        """
+        Fonction permettant de supprimer une tâche
+
+        Paramètres:
+            None
+
+        Retourne: None
+        """
+
+        while True:
+
+            tache = input("Veuillez rentrer la tache à supprimer: ")
+
+            if not tache in self.__taches:
+                print("\nErreur: la tache donnée n'existe pas.\n")
+                continue
+
+            self.__taches.pop(tache)
             self.__taches = dict(sorted(self.__taches.items(), key=lambda item: (item[1]["status"], item[1]["date"])))
             self.__num_menu = 0
             break
