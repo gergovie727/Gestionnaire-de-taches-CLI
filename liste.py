@@ -84,6 +84,12 @@ class to_do_liste:
             if self.__num_menu == 4:
                 self.__supprimer_une_tache()
                 continue
+
+            else:
+                print("Merci d'avoir utilisé ce programme. A bientôt !")
+                exit(0)
+
+
         
     def __ecran_de_selection(self) -> None:
         """
@@ -172,7 +178,12 @@ class to_do_liste:
 
         while True:
 
-            tache = input("Veuillez entrer la tache: ")
+            tache = input("Veuillez entrer la tache (menu pour revenir au menu): ")
+
+            if tache == "menu":
+                self.__num_menu = 0
+                return
+
             if tache in self.__taches:
                 print("\nErreur, cette tâche existe déjà.")
                 continue
@@ -202,7 +213,11 @@ class to_do_liste:
 
         while True:
 
-            tache = input("Veuillez rentrer la tâche a terminer: ")
+            tache = input("Veuillez rentrer la tâche a terminer (menu pour revenir au menu): ")
+
+            if tache == "menu":
+                self.__num_menu = 0
+                return
 
             if not tache in self.__taches:
                 print("\nErreur: La tâche donnée n'existe pas.\n")
@@ -216,7 +231,7 @@ class to_do_liste:
         with open(self.__nom_fichier, 'w') as fichier:
             fichier.write(json.dumps(self.__taches, indent=1, ensure_ascii=False))
 
-    def __supprimer_une_tache(self):
+    def __supprimer_une_tache(self) -> None:
         """
         Fonction permettant de supprimer une tâche
 
@@ -228,7 +243,11 @@ class to_do_liste:
 
         while True:
 
-            tache = input("Veuillez rentrer la tache à supprimer: ")
+            tache = input("Veuillez rentrer la tache à supprimer (menu pour revenir au menu): ")
+
+            if tache == "menu":
+                self.__num_menu = 0
+                return
 
             if not tache in self.__taches:
                 print("\nErreur: la tache donnée n'existe pas.\n")
