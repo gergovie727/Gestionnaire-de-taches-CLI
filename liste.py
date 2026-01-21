@@ -23,6 +23,12 @@ class ToDoList:
         __verifier_fichier(self, nom_fichier: str) -> bool: Vérifie si le fichier fourni est bien un fichier json bien formé. Renvoie True s'il l'est ou si le fichier n'existe pas. Renvoie False sinon.
         menu(self) -> None: Permet la sélection de la fonction à utiliser en fonction de __num_menu.
         __ecran_de_selection(self) -> None: Affiche l'écran de sélection des menus.
+        __sauvegarde(self) -> None: Permet de sauvegarder les tâches dans le fichier.
+        __get_iso_date(self, date: str) -> datetime.date: Permet, à partir de la date en format JJ/MM/AAAA d'obtenir la date en format ISO.
+        __visualiser_taches(self) -> None: Permet de visualiser les tâches.
+        __ajouter_taches(self): Permet d'ajouter une tâche.
+        __terminer_tache(self): Permet de marquer une tâche comme étant terminée.
+        __supprimer_tache(self) -> None: Permet de supprimer une tâche.
     """
 
     def __init__(self, nom_fichier:str) -> None:
@@ -31,7 +37,7 @@ class ToDoList:
 
         if self.__verifier_fichier(nom_fichier):
             self.__nom_fichier: str = nom_fichier
-            self.__taches = dict(sorted(self.__taches.items(), key=lambda item: (item[1]["status"], item[1]["date"])))
+            self.__taches = dict(sorted(self.__taches.items(), key=lambda item: (item[1]["status"], self.__get_iso_date(item[1]["date"]))))
         else:
             raise erreur.FichierError("Le fichier fourni n'est pas un fichier json")
         
@@ -74,11 +80,11 @@ class ToDoList:
                 continue
 
             if self.__num_menu == 1:
-                self.__visualisation_des_taches()
+                self.__visualiser_taches()
                 continue
 
             if self.__num_menu == 2:
-                self.__ajout_des_taches()
+                self.__ajouter_taches()
                 continue
 
             if self.__num_menu == 3:
@@ -86,7 +92,7 @@ class ToDoList:
                 continue
 
             if self.__num_menu == 4:
-                self.__supprimer_une_tache()
+                self.__supprimer_tache()
                 continue
 
             else:
@@ -153,7 +159,7 @@ class ToDoList:
 
 
  
-    def __visualisation_des_taches(self) -> None:
+    def __visualiser_taches(self) -> None:
         """
         Fonction permettant à l'utilisateur de visualiser les tâches qu'il a en cours et celles qu'il a terminé.
 
@@ -171,25 +177,26 @@ class ToDoList:
         
         today = datetime.date.today()
         
-        for tache,info in self.__taches.items():
+        for id,info in self.__taches.items():
 
+            tache = info["tache"]
             date = info["date"]
             date_tache = self.__get_iso_date(date)
 
             if info["status"]:
-                print(f"{colorama.Fore.GREEN}{tache} : {date} TERMINEE{colorama.Style.RESET_ALL}")
+                print(f"{colorama.Fore.GREEN}{tache} (ID: {id}) : {date} TERMINEE{colorama.Style.RESET_ALL}")
 
             elif date_tache > today:
-                print(f"{colorama.Fore.LIGHTGREEN_EX}{tache} : {date}{colorama.Style.RESET_ALL}")
+                print(f"{colorama.Fore.LIGHTGREEN_EX}{tache} (ID: {id}) : {date}{colorama.Style.RESET_ALL}")
             elif date_tache == today:
-                print(f"{colorama.Fore.YELLOW}{tache} : {date}{colorama.Style.RESET_ALL}")
+                print(f"{colorama.Fore.YELLOW}{tache} (ID: {id}) : {date}{colorama.Style.RESET_ALL}")
             else:
-                print(f"{colorama.Fore.RED}{tache} : {date}{colorama.Style.RESET_ALL}")
+                print(f"{colorama.Fore.RED}{tache} (ID: {id}) : {date}{colorama.Style.RESET_ALL}")
 
         input("\n")
         self.__num_menu = 0
 
-    def __ajout_des_taches(self):
+    def __ajouter_taches(self):
         """
         Fonction permettant à l'utilisateur d'ajouter des tâches à sa liste.
 
@@ -207,9 +214,7 @@ class ToDoList:
                 self.__num_menu = 0
                 return
 
-            if tache in self.__taches:
-                print("\nErreur, cette tâche existe déjà.")
-                continue
+            id = str(int(max([i for i in self.__taches.keys()])) + 1)
 
             date = input("\nVeuillez rentrer la date sous la forme JJ/MM/AAAA: ")
 
@@ -219,7 +224,7 @@ class ToDoList:
                 print("\nErreur, la date entrée est invalide.")
                 continue
 
-            self.__taches[tache]={"date": date, "status": 0}
+            self.__taches[id]={"tache": tache, "date": date, "status": 0}
             self.__num_menu = 0
             break
 
@@ -237,23 +242,23 @@ class ToDoList:
 
         while True:
 
-            tache = input("Veuillez rentrer la tâche a terminer (menu pour revenir au menu): ")
+            id = input("Veuillez rentrer l'ID de la tâche a terminer (menu pour revenir au menu): ")
 
-            if tache == "menu":
+            if id == "menu":
                 self.__num_menu = 0
                 return
 
-            if not tache in self.__taches:
+            if not id in self.__taches:
                 print("\nErreur: La tâche donnée n'existe pas.\n")
                 continue
 
-            self.__taches[tache]["status"] = 1
+            self.__taches[id]["status"] = 1
             self.__num_menu = 0
             break
 
         self.__sauvegarde()
 
-    def __supprimer_une_tache(self) -> None:
+    def __supprimer_tache(self) -> None:
         """
         Fonction permettant de supprimer une tâche
 
@@ -265,17 +270,17 @@ class ToDoList:
 
         while True:
 
-            tache = input("Veuillez rentrer la tache à supprimer (menu pour revenir au menu): ")
+            id = input("Veuillez rentrer l'ID de la tache à supprimer (menu pour revenir au menu): ")
 
-            if tache == "menu":
+            if id == "menu":
                 self.__num_menu = 0
                 return
 
-            if not tache in self.__taches:
+            if not id in self.__taches:
                 print("\nErreur: la tache donnée n'existe pas.\n")
                 continue
 
-            self.__taches.pop(tache)
+            self.__taches.pop(id)
             self.__num_menu = 0
             break
 
