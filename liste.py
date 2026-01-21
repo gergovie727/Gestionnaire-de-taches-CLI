@@ -32,11 +32,9 @@ class ToDoList:
 
     def __init__(self, nom_fichier:str) -> None:
 
-        self.__taches: dict = {}
+        self.__taches: dict = self.__verifier_fichier(nom_fichier)
 
-        presence_fichier = self.__verifier_fichier(nom_fichier)
-
-        if presence_fichier == {}:
+        if self.__taches == {}:
             self.__nom_fichier: str = nom_fichier
 
         else:
@@ -76,31 +74,17 @@ class ToDoList:
         Retourne: None
         """
 
+        actions = {
+                0: self.__ecran_de_selection,
+                1: self.__visualiser_taches,
+                2: self.__ajouter_taches,
+                3: self.__terminer_tache,
+                4: self.__supprimer_tache,
+                5: self.__quitter_programme
+            }
+
         while True:
-            
-            if self.__num_menu == 0:
-                self.__ecran_de_selection()
-                continue
-
-            if self.__num_menu == 1:
-                self.__visualiser_taches()
-                continue
-
-            if self.__num_menu == 2:
-                self.__ajouter_taches()
-                continue
-
-            if self.__num_menu == 3:
-                self.__terminer_tache()
-                continue
-
-            if self.__num_menu == 4:
-                self.__supprimer_tache()
-                continue
-
-            else:
-                print("Merci d'avoir utilisé ce programme. A bientôt !")
-                exit(0)
+            actions[self.__num_menu]()
 
 
         
@@ -217,7 +201,7 @@ class ToDoList:
                 self.__num_menu = 0
                 return
 
-            id = str(int(max([i for i in self.__taches.keys()] or  [0])) + 1)
+            id = str(max([int(i) for i in self.__taches.keys()] or  [0]) + 1)
 
             date = input("\nVeuillez rentrer la date sous la forme JJ/MM/AAAA: ")
 
@@ -288,3 +272,16 @@ class ToDoList:
             break
 
         self.__sauvegarde()
+
+    def __quitter_programme(self) -> None:
+        """
+        Fonction permettant de quitter le programme.
+        
+        Paramètre:
+            None
+
+        Retourne: None
+        """
+
+        print("Merci d'avoir utilisé ce programme. A bientôt !")
+        exit(0)
